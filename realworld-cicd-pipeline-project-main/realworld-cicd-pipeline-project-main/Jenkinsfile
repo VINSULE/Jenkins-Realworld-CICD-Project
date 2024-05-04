@@ -17,12 +17,15 @@ pipeline {
   }
   tools {
     maven 'localMaven'
-    jdk 'localJdk'
+    jdk 'localjdk'
   }
   stages {
     stage('Build') {
       steps {
+        dir('realworld-cicd-pipeline-project-main/') {
         sh 'mvn clean package'
+      }
+      }
       }
       post {
         success {
@@ -33,18 +36,22 @@ pipeline {
     }
     stage('Unit Test'){
         steps {
-            sh 'mvn test'
-        }
-    }
+        dir('realworld-cicd-pipeline-project-main/') {
+        sh 'mvn clean package'
+      }
+      }
     stage('Integration Test'){
         steps {
-          sh 'mvn verify -DskipUnitTests'
-        }
-    }
+        dir('realworld-cicd-pipeline-project-main/') {
+        sh 'mvn verify -DskipUnitTests'
+      }
+      }
     stage ('Checkstyle Code Analysis'){
         steps {
-            sh 'mvn checkstyle:checkstyle'
-        }
+        dir('realworld-cicd-pipeline-project-main/') {
+        sh 'mvn checkstyle:checkstyle'
+      }
+      }
         post {
             success {
                 echo 'Generated Analysis Result'
@@ -58,7 +65,7 @@ pipeline {
                 sh """
                 mvn sonar:sonar \
                 -Dsonar.projectKey=JavaWebApp-Project \
-                -Dsonar.host.url=http://172.31.90.165:9000 \
+                -Dsonar.host.url=http://172.31.57.14:9000 \
                 -Dsonar.login=$SONAR_TOKEN
                 """
                 }
@@ -130,7 +137,7 @@ pipeline {
   post {
     always {
         echo 'Slack Notifications.'
-        slackSend channel: 'innovative-cicd-pipeline', //update and provide your channel name
+        slackSend channel: '#innov-cicd-pipeline-alerts', //update and provide your channel name
         color: COLOR_MAP[currentBuild.currentResult],
         message: "*${currentBuild.currentResult}:* Job Name '${env.JOB_NAME}' build ${env.BUILD_NUMBER} \n Build Timestamp: ${env.BUILD_TIMESTAMP} \n Project Workspace: ${env.WORKSPACE} \n More info at: ${env.BUILD_URL}"
     }
